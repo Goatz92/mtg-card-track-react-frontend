@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Container, Row, Col, Alert } from 'react-bootstrap';
 import './App.css';
 import SearchBar from './components/SearchBar';
 import CardList from './components/CardList';
@@ -32,7 +33,6 @@ function App() {
     try {
       const result = await addCardToCollection(cardName);
       setNotification(`${result.data.name} was added to your collection.`);
-      // Clear the notification after a few seconds
       setTimeout(() => setNotification(''), 3000);
     } catch (err) {
       setError('Failed to add card to collection.');
@@ -41,18 +41,18 @@ function App() {
   };
 
   return (
-    <div className="App">
-      <header className="App-header">
-        <h1>Magic: The Gathering Collection Tracker</h1>
-      </header>
-      <main>
-        {notification && <div className="notification">{notification}</div>}
-        <SearchBar onSearch={handleSearch} />
-        {loading && <p>Loading...</p>}
-        {error && <p className="error">{error}</p>}
-        <CardList cards={cards} onAddToCollection={handleAddToCollection} />
-      </main>
-    </div>
+    <Container className="mt-4">
+      <Row>
+        <Col>
+          <h1 className="text-center mb-4">Magic: The Gathering Collection Tracker</h1>
+          {notification && <Alert variant="success">{notification}</Alert>}
+          {error && <Alert variant="danger">{error}</Alert>}
+          <SearchBar onSearch={handleSearch} />
+          {loading && <p className="text-center">Loading...</p>}
+          <CardList cards={cards} onAddToCollection={handleAddToCollection} />
+        </Col>
+      </Row>
+    </Container>
   );
 }
 
