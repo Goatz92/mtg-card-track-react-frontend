@@ -1,6 +1,6 @@
 import React from 'react';
 
-const Card = ({ card }) => {
+const Card = ({ card, onAddToCollection }) => {
   return (
     <div className="card">
       <img src={card.imageUrl} alt={card.name} />
@@ -9,6 +9,9 @@ const Card = ({ card }) => {
         <p>{card.manaCost}</p>
         <p>{card.type}</p>
         <p>{card.text}</p>
+        <button onClick={() => onAddToCollection(card.name)}>
+          Add to Collection
+        </button>
       </div>
     </div>
   );
