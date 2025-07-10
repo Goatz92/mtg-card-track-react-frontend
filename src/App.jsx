@@ -10,6 +10,11 @@ function App() {
   const [error, setError] = useState(null);
 
   const handleSearch = async (searchTerm) => {
+    if (!searchTerm.trim()) {
+      setError('Please search for a specific card.');
+      setCards([]);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
