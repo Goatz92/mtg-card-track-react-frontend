@@ -12,7 +12,9 @@ const Card = ({ card, onAddToCollection }) => {
         />
         <div className="flex-grow-1">
           <BootstrapCard.Title>{card.name}</BootstrapCard.Title>
-          <BootstrapCard.Subtitle className="mb-2 text-muted">{card.manaCost}</BootstrapCard.Subtitle>
+          <BootstrapCard.Subtitle className="mb-2 text-muted">
+            {card.manaCost}
+          </BootstrapCard.Subtitle>
           <BootstrapCard.Text>
             <strong>Type:</strong> {card.type}<br/>
             <strong>Description:</strong> {card.text}
