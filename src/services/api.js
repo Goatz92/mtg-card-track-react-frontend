@@ -21,3 +21,13 @@ export const addCardToCollection = async (cardName) => {
     throw error;
   }
 };
+
+export const fetchRandomCard = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/random`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching random card:', error);
+    throw error;
+  }
+};

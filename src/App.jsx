@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Container, Row, Col, Alert } from 'react-bootstrap';
+import { Container, Row, Col, Alert, Button } from 'react-bootstrap';
 import './App.css';
 import SearchBar from './components/SearchBar';
 import CardList from './components/CardList';
-import { searchCards, addCardToCollection } from './services/api';
+import { searchCards, addCardToCollection, fetchRandomCard } from './services/api';
 
 function App() {
   const [cards, setCards] = useState([]);
@@ -40,6 +40,20 @@ function App() {
     }
   };
 
+  // Fetch a random card
+  const handleRandom = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const randomCards = await fetchRandomCard();
+      setCards(randomCards);
+    } catch (err) {
+      setError('Failed to fetch random card.');
+      console.error(err);
+    }
+    setLoading(false);
+  };
+
   return (
     <Container className="mt-4">
       <Row>
@@ -48,6 +62,11 @@ function App() {
           {notification && <Alert variant="success">{notification}</Alert>}
           {error && <Alert variant="danger">{error}</Alert>}
           <SearchBar onSearch={handleSearch} />
+          <div className="text-center mb-3">
+            <Button variant="outline-primary" onClick={handleRandom}>
+              Random Card
+            </Button>
+          </div>
           {loading && <p className="text-center">Loading...</p>}
           <CardList cards={cards} onAddToCollection={handleAddToCollection} />
         </Col>
