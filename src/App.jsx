@@ -3,9 +3,11 @@ import { Container, Row, Col, Alert, Button, Form } from 'react-bootstrap';
 import './App.css';
 import SearchBar from './components/SearchBar';
 import CardList from './components/CardList';
-import { searchCards, addCardToCollection, fetchRandomCard, registerUser } from './services/api';
+import { searchCards, addCardToCollection, fetchRandomCard, registerUser, loginUser } from './services/api';
 
 function App() {
+    const [loginUsername, setLoginUsername] = useState('');
+    const [loginPassword, setLoginPassword] = useState('');
     const [cards, setCards] = useState([]);
     const [regEmail, setRegEmail] = useState('');
     const [regUsername, setRegUsername] = useState('');
@@ -13,6 +15,7 @@ function App() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [notification, setNotification] = useState('');
+    const [token, setToken] = useState(null);
 
     const handleRegister = async (e) => {
         e.preventDefault();
@@ -76,10 +79,48 @@ function App() {
         setLoading(false);
     };
 
+    const handleLogin = async (e) => {
+        e.preventDefault();
+        setError(null);
+        try {
+            const result = await loginUser({ username: loginUsername, password: loginPassword });
+            setToken(result.token);
+            setNotification('Login successful!');
+            setLoginUsername('');
+            setLoginPassword('');
+        } catch (err) {
+            setError(err.response?.data?.message || 'Login failed. Please try again.');
+        }
+    };
+
     return (
         <Container className="mt-4">
             <Row>
                 <Col>
+                    {/* Login Form */}
+                    <Form onSubmit={handleLogin} className="mb-4">
+                        <Form.Group controlId="loginUsername" className="mb-2">
+                            <Form.Control
+                                type="text"
+                                placeholder="Username"
+                                value={loginUsername}
+                                onChange={e => setLoginUsername(e.target.value)}
+                                required
+                            />
+                        </Form.Group>
+                        <Form.Group controlId="loginPassword" className="mb-2">
+                            <Form.Control
+                                type="password"
+                                placeholder="Password"
+                                value={loginPassword}
+                                onChange={e => setLoginPassword(e.target.value)}
+                                required
+                            />
+                        </Form.Group>
+                        <Button variant="primary" type="submit" className="mb-3">
+                            Login
+                        </Button>
+                    </Form>
                     <h1 className="text-center mb-4">Magic: The Gathering Collection Tracker</h1>
                     {notification && <Alert variant="success">{notification}</Alert>}
                     {error && <Alert variant="danger">{error}</Alert>}

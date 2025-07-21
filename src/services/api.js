@@ -45,3 +45,17 @@ export const registerUser = async ({ username, email, password }) => {
     throw error;
   }
 };
+
+// Login an existing user
+export const loginUser = async ({ username, password }) => {
+  try {
+    const response = await axios.post(
+      `${API_URL.replace('/cards', '')}/auth/login`,
+      { username, password }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error logging in user:', error);
+    throw error;
+  }
+};
