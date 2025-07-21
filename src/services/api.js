@@ -59,3 +59,33 @@ export const loginUser = async ({ username, password }) => {
     throw error;
   }
 };
+
+// Get cards in a user's collection
+export const getUserCollection = async (username, token) => {
+  try {
+    const response = await axios.get(
+      `${API_URL.replace('/cards', '')}/users/${username}/collection`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return response.data.data; // successResponse returns { status, data }
+  } catch (error) {
+    console.error('Error fetching user collection:', error);
+    throw error;
+  }
+};
+
+// Add a card to the logged-in user's private collection
+export const addCardToUserCollection = async (username, cardName, token, quantity = 1) => {
+  try {
+    const URL = API_URL.replace('/cards', '');
+    const response = await axios.post(
+      `${URL}/users/${username}/collection`,
+      { cardName, quantity },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error adding card to user collection:', error);
+    throw error;
+  }
+};

@@ -3,11 +3,13 @@ import { Container, Row, Col, Alert, Button, Form } from 'react-bootstrap';
 import './App.css';
 import SearchBar from './components/SearchBar';
 import CardList from './components/CardList';
-import { searchCards, addCardToCollection, fetchRandomCard, registerUser, loginUser } from './services/api';
+import { searchCards, addCardToCollection, fetchRandomCard, registerUser, loginUser, getUserCollection, addCardToUserCollection } from './services/api';
 
 function App() {
     const [loginUsername, setLoginUsername] = useState('');
     const [loginPassword, setLoginPassword] = useState('');
+    // Track logged-in username
+    const [currentUsername, setCurrentUsername] = useState(null);
     const [cards, setCards] = useState([]);
     const [regEmail, setRegEmail] = useState('');
     const [regUsername, setRegUsername] = useState('');
@@ -16,6 +18,7 @@ function App() {
     const [error, setError] = useState(null);
     const [notification, setNotification] = useState('');
     const [token, setToken] = useState(null);
+    const [isCollectionMode, setCollectionMode] = useState(false);
 
     const handleRegister = async (e) => {
         e.preventDefault();
@@ -51,13 +54,21 @@ function App() {
             setError('Failed to fetch cards. Please try again.');
             console.error(err);
         }
+        setCollectionMode(false);
         setLoading(false);
     };
 
     const handleAddToCollection = async (cardName) => {
         try {
-            const result = await addCardToCollection(cardName);
-            setNotification(`${result.data.name} was added to your collection.`);
+            if (token) {
+                // Add to private user collection when logged in
+                await addCardToUserCollection(currentUsername, cardName, token);
+                setNotification(`${cardName} added to your personal collection.`);
+            } else {
+                // Add to general collection as before
+                const result = await addCardToCollection(cardName);
+                setNotification(`${result.data.name} was added to the general collection.`);
+            }
             setTimeout(() => setNotification(''), 3000);
         } catch (err) {
             setError('Failed to add card to collection.');
@@ -76,6 +87,23 @@ function App() {
             setError('Failed to fetch random card.');
             console.error(err);
         }
+        setCollectionMode(false);
+        setLoading(false);
+    };
+
+    // Fetch logged-in user's collection
+    const handleShowCollection = async () => {
+        if (!token) return;
+        setCollectionMode(true);
+        setLoading(true);
+        setError(null);
+        try {
+            const userCards = await getUserCollection(currentUsername, token);
+            setCards(userCards);
+        } catch (err) {
+            setError('Failed to fetch your collection.');
+            console.error(err);
+        }
         setLoading(false);
     };
 
@@ -85,7 +113,13 @@ function App() {
         try {
             const result = await loginUser({ username: loginUsername, password: loginPassword });
             setToken(result.token);
+            // Store username for future API calls
+            setCurrentUsername(loginUsername);
             setNotification('Login successful!');
+            // Fetch the user's card collection after login
+            const userCards = await getUserCollection(loginUsername, result.token);
+            setCards(userCards);
+            setCollectionMode(true);
             setLoginUsername('');
             setLoginPassword('');
         } catch (err) {
@@ -124,6 +158,7 @@ function App() {
                     <h1 className="text-center mb-4">Magic: The Gathering Collection Tracker</h1>
                     {notification && <Alert variant="success">{notification}</Alert>}
                     {error && <Alert variant="danger">{error}</Alert>}
+                    {currentUsername && <Alert variant="info">{currentUsername} logged in</Alert>}
                     {/* Registration Form */}
                     <Form onSubmit={handleRegister} className="mb-4">
                         <Form.Group controlId="regUsername" className="mb-2">
@@ -162,9 +197,20 @@ function App() {
                         <Button variant="outline-primary" onClick={handleRandom}>
                             Random Card
                         </Button>
+                        {token && (
+                            <Button variant="outline-secondary" onClick={handleShowCollection} className="ms-2">
+                                My Collection
+                            </Button>
+                        )}
                     </div>
                     {loading && <p className="text-center">Loading...</p>}
-                    <CardList cards={cards} onAddToCollection={handleAddToCollection} />
+                    <CardList cards={cards} onAddToCollection={handleAddToCollection} isCollection={isCollectionMode} />
+                    {/* Show message if user is logged in and collection is empty */}
+                    {token && !cards.length && (
+                        <Alert variant="info" className="mt-3">
+                          Your collection is empty. Let's add some cards!
+                        </Alert>
+                    )}
                 </Col>
             </Row>
         </Container>
