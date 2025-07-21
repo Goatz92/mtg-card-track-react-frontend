@@ -3,10 +3,10 @@ import { Card as BootstrapCard, Button } from 'react-bootstrap';
 
 const Card = ({ card, onAddToCollection, isCollection }) => {
   // Determine data shape for collection vs search/random
-  const data = isCollection ? card.card : card;
-  const imageSrc = isCollection
-    ? data.imageUris?.normal
-    : data.imageUrl;
+  // Support both collection items (with nested card) and simple card objects
+  const data = isCollection && card.card ? card.card : card;
+  // Use Scryfall image if available, else fallback to imageUrl
+  const imageSrc = data.imageUris?.normal || data.imageUrl;
   const name = data.name;
 
   if (isCollection) {
@@ -40,7 +40,7 @@ const Card = ({ card, onAddToCollection, isCollection }) => {
             {data.manaCost}
           </BootstrapCard.Subtitle>
           <BootstrapCard.Text>
-            <strong>Type:</strong> {data.type}<br/>
+            <strong>Type:</strong> {data.type}<br />
             <strong>Description:</strong> {data.text}
           </BootstrapCard.Text>
           <Button variant="success" onClick={() => onAddToCollection(data.name)}>
