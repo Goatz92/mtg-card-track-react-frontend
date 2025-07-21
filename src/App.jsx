@@ -208,7 +208,7 @@ function App() {
                     {/* Show message if user is logged in and collection is empty */}
                     {token && !cards.length && (
                         <Alert variant="info" className="mt-3">
-                          Your collection is empty. Let's add some cards!
+                            Your collection is empty. Let's add some cards!
                         </Alert>
                     )}
                 </Col>
