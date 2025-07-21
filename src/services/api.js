@@ -31,3 +31,17 @@ export const fetchRandomCard = async () => {
     throw error;
   }
 };
+
+// Register a new user
+export const registerUser = async ({ username, email, password }) => {
+  try {
+    const response = await axios.post(
+      `${API_URL.replace('/cards', '')}/users/register`,
+      { username, email, password }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error registering user:', error);
+    throw error;
+  }
+};
