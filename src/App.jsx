@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Container, Row, Col, Alert, Button, Form } from 'react-bootstrap';
 import './App.css';
 import SearchBar from './components/SearchBar';
@@ -9,7 +10,7 @@ function App() {
     const [loginUsername, setLoginUsername] = useState('');
     const [loginPassword, setLoginPassword] = useState('');
     // Track logged-in username
-    const [currentUsername, setCurrentUsername] = useState(null);
+    const [currentUsername, setCurrentUsername] = useState(() => localStorage.getItem('mtgUsername'));
     const [cards, setCards] = useState([]);
     const [regEmail, setRegEmail] = useState('');
     const [regUsername, setRegUsername] = useState('');
@@ -17,8 +18,17 @@ function App() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [notification, setNotification] = useState('');
-    const [token, setToken] = useState(null);
+    const [token, setToken] = useState(() => localStorage.getItem('mtgToken'));
     const [isCollectionMode, setCollectionMode] = useState(false);
+
+    // Sync axios auth header when token changes
+    useEffect(() => {
+        if (token) {
+            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        } else {
+            delete axios.defaults.headers.common['Authorization'];
+        }
+    }, [token]);
 
     const handleRegister = async (e) => {
         e.preventDefault();
@@ -113,6 +123,8 @@ function App() {
         try {
             const result = await loginUser({ username: loginUsername, password: loginPassword });
             setToken(result.token);
+            localStorage.setItem('mtgToken', result.token);
+            localStorage.setItem('mtgUsername', loginUsername);
             // Store username for future API calls
             setCurrentUsername(loginUsername);
             setNotification('Login successful!');
@@ -125,6 +137,16 @@ function App() {
         } catch (err) {
             setError(err.response?.data?.message || 'Login failed. Please try again.');
         }
+    };
+
+    const handleLogout = () => {
+        setToken(null);
+        setCurrentUsername(null);
+        localStorage.removeItem('mtgToken');
+        localStorage.removeItem('mtgUsername');
+        setCards([]);
+        setCollectionMode(false);
+        setNotification('');
     };
 
     return (
@@ -158,7 +180,7 @@ function App() {
                     <h1 className="text-center mb-4">Magic: The Gathering Collection Tracker</h1>
                     {notification && <Alert variant="success">{notification}</Alert>}
                     {error && <Alert variant="danger">{error}</Alert>}
-                    {currentUsername && <Alert variant="info">{currentUsername} logged in</Alert>}
+                    {currentUsername && <Alert variant="info">{currentUsername} logged in <Button variant="link" onClick={handleLogout}>Logout</Button></Alert>}
                     {/* Registration Form */}
                     <Form onSubmit={handleRegister} className="mb-4">
                         <Form.Group controlId="regUsername" className="mb-2">
