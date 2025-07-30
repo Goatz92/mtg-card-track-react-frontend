@@ -1,10 +1,10 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api/cards'; 
+const API_URL = import.meta.env.VITE_API_URL;
 
 export const searchCards = async (searchTerm) => {
   try {
-    const response = await axios.get(`${API_URL}/search/${searchTerm}`);
+    const response = await axios.get(`${API_URL}/cards/search/${searchTerm}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching cards:', error);
@@ -14,7 +14,7 @@ export const searchCards = async (searchTerm) => {
 
 export const addCardToCollection = async (cardName) => {
   try {
-    const response = await axios.post(`${API_URL}/scryfall/name/${cardName}`);
+    const response = await axios.post(`${API_URL}/cards/scryfall/name/${cardName}`);
     return response.data;
   } catch (error) {
     console.error('Error adding card to collection:', error);
@@ -24,7 +24,7 @@ export const addCardToCollection = async (cardName) => {
 
 export const fetchRandomCard = async () => {
   try {
-    const response = await axios.get(`${API_URL}/random`);
+    const response = await axios.get(`${API_URL}/cards/random`);
     return response.data;
   } catch (error) {
     console.error('Error fetching random card:', error);
@@ -36,7 +36,7 @@ export const fetchRandomCard = async () => {
 export const registerUser = async ({ username, email, password }) => {
   try {
     const response = await axios.post(
-      `${API_URL.replace('/cards', '')}/users/register`,
+      `${API_URL}/users/register`,
       { username, email, password }
     );
     return response.data;
@@ -50,7 +50,7 @@ export const registerUser = async ({ username, email, password }) => {
 export const loginUser = async ({ username, password }) => {
   try {
     const response = await axios.post(
-      `${API_URL.replace('/cards', '')}/auth/login`,
+      `${API_URL}/auth/login`,
       { username, password }
     );
     return response.data;
@@ -64,7 +64,7 @@ export const loginUser = async ({ username, password }) => {
 export const getUserCollection = async (username, token) => {
   try {
     const response = await axios.get(
-      `${API_URL.replace('/cards', '')}/users/${username}/collection`,
+      `${API_URL}/users/${username}/collection`,
       { headers: { Authorization: `Bearer ${token}` } }
     );
     return response.data.data; // successResponse returns { status, data }
@@ -77,9 +77,8 @@ export const getUserCollection = async (username, token) => {
 // Add a card to the logged-in user's private collection
 export const addCardToUserCollection = async (username, cardName, token, quantity = 1) => {
   try {
-    const URL = API_URL.replace('/cards', '');
     const response = await axios.post(
-      `${URL}/users/${username}/collection`,
+      `${API_URL}/users/${username}/collection`,
       { cardName, quantity },
       { headers: { Authorization: `Bearer ${token}` } }
     );
