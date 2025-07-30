@@ -1,16 +1,15 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { useAuth } from './context/AuthContext';
 import { Container, Row, Col, Alert, Button, Form } from 'react-bootstrap';
 import './App.css';
 import SearchBar from './components/SearchBar';
 import CardList from './components/CardList';
-import { searchCards, addCardToCollection, fetchRandomCard, registerUser, loginUser, getUserCollection, addCardToUserCollection } from './services/api';
+import { searchCards, addCardToCollection, fetchRandomCard, registerUser, getUserCollection, addCardToUserCollection } from './services/api';
 
 function App() {
     const [loginUsername, setLoginUsername] = useState('');
     const [loginPassword, setLoginPassword] = useState('');
-    // Track logged-in username
-    const [currentUsername, setCurrentUsername] = useState(() => localStorage.getItem('mtgUsername'));
+    const { token, user, login, logout, isAuthenticated } = useAuth();
     const [cards, setCards] = useState([]);
     const [regEmail, setRegEmail] = useState('');
     const [regUsername, setRegUsername] = useState('');
@@ -18,17 +17,7 @@ function App() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [notification, setNotification] = useState('');
-    const [token, setToken] = useState(() => localStorage.getItem('mtgToken'));
     const [isCollectionMode, setCollectionMode] = useState(false);
-
-    // Sync axios auth header when token changes
-    useEffect(() => {
-        if (token) {
-            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        } else {
-            delete axios.defaults.headers.common['Authorization'];
-        }
-    }, [token]);
 
     const handleRegister = async (e) => {
         e.preventDefault();
@@ -70,14 +59,13 @@ function App() {
 
     const handleAddToCollection = async (cardName) => {
         try {
-            if (token) {
+            if (isAuthenticated) {
                 // Add to private user collection when logged in
-                await addCardToUserCollection(currentUsername, cardName, token);
-                setNotification(`${cardName} added to your personal collection.`);
+                await addCardToUserCollection(user, cardName);
             } else {
                 // Add to general collection as before
                 const result = await addCardToCollection(cardName);
-                setNotification(`${result.data.name} was added to the general collection.`);
+                setNotification(`${result.name || result.data.name} was added to the general collection.`);
             }
             setTimeout(() => setNotification(''), 3000);
         } catch (err) {
@@ -103,12 +91,12 @@ function App() {
 
     // Fetch logged-in user's collection
     const handleShowCollection = async () => {
-        if (!token) return;
+        if (!isAuthenticated) return;
         setCollectionMode(true);
         setLoading(true);
         setError(null);
         try {
-            const userCards = await getUserCollection(currentUsername, token);
+            const userCards = await getUserCollection(user);
             setCards(userCards);
         } catch (err) {
             setError('Failed to fetch your collection.');
@@ -121,17 +109,20 @@ function App() {
         e.preventDefault();
         setError(null);
         try {
-            const result = await loginUser({ username: loginUsername, password: loginPassword });
-            setToken(result.token);
-            localStorage.setItem('mtgToken', result.token);
-            localStorage.setItem('mtgUsername', loginUsername);
-            // Store username for future API calls
-            setCurrentUsername(loginUsername);
+            // Preserve the entered username for collection fetch
+            const username = loginUsername;
+            await login({ username, password: loginPassword });
             setNotification('Login successful!');
-            // Fetch the user's card collection after login
-            const userCards = await getUserCollection(loginUsername, result.token);
-            setCards(userCards);
-            setCollectionMode(true);
+            // Attempt to fetch the user's collection, ignore if none
+            try {
+                const userCards = await getUserCollection(username);
+                setCards(userCards);
+                setCollectionMode(true);
+            } catch (fetchErr) {
+                console.warn('Could not load collection on login:', fetchErr);
+                setCards([]);
+                setCollectionMode(true);
+            }
             setLoginUsername('');
             setLoginPassword('');
         } catch (err) {
@@ -140,10 +131,7 @@ function App() {
     };
 
     const handleLogout = () => {
-        setToken(null);
-        setCurrentUsername(null);
-        localStorage.removeItem('mtgToken');
-        localStorage.removeItem('mtgUsername');
+        logout();
         setCards([]);
         setCollectionMode(false);
         setNotification('');
@@ -180,7 +168,7 @@ function App() {
                     <h1 className="text-center mb-4">Magic: The Gathering Collection Tracker</h1>
                     {notification && <Alert variant="success">{notification}</Alert>}
                     {error && <Alert variant="danger">{error}</Alert>}
-                    {currentUsername && <Alert variant="info">{currentUsername} logged in <Button variant="link" onClick={handleLogout}>Logout</Button></Alert>}
+                    {user && <Alert variant="info">{user} logged in <Button variant="link" onClick={handleLogout}>Logout</Button></Alert>}
                     {/* Registration Form */}
                     <Form onSubmit={handleRegister} className="mb-4">
                         <Form.Group controlId="regUsername" className="mb-2">
